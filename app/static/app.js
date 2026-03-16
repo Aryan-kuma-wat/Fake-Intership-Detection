@@ -71,8 +71,72 @@ function runExample(i) {
   setTimeout(() => analyzeText(), 400);
 }
 
+// ── Client-side NLP detection engine (works on GitHub Pages) ─
+const RED_FLAG_PATTERNS = {
+  'Registration / security fee':     /\b(registration\s*fee|security\s*deposit|joining\s*fee|pay\s*(rs\.?|inr|₹|\$)\s*\d+|deposit\s*(of|rs))/i,
+  'Guaranteed income':               /\b(guaranteed\s*(salary|income|earning|payment)|earn\s*(rs\.?|inr|₹|\$)\s*[\d,]+\s*(per|\/)\s*(month|week|day))/i,
+  'No experience required':          /\bno\s+(experience|qualification|degree|skill)\s*(required|needed|necessary)/i,
+  'Urgency & pressure':              /\b(urgent(ly)?|limited\s*slots?|act\s*now|hurry|don\'t\s*wait|seats?\s*(filling|limited)|last\s*(few|chance))/i,
+  'Sensitive document request':      /\b(aadhar|aadhaar|pan\s*card|passport|bank\s*(details|account)|account\s*number|send\s*(your|us)\s*(id|photo|document|card))/i,
+  'WhatsApp / personal contact':     /\b(whatsapp\s*(us|me|now)?|dm\s*(us|me)|telegram|call\s*(us|now)|contact\s*(us\s*on|via)\s*(whatsapp|telegram))/i,
+  'Work from home (suspicious)':     /\bwork\s*(from\s*home|at\s*home)\b/i,
+  'Unrealistic part-time pay':       /\b(work\s*\d+[-–]\d+\s*hours?\s*(daily|per\s*day)|earn\s*\$[\d,]+\s*per\s*(week|day))\b/i,
+  'No interview / instant hiring':   /\b(no\s*interview|direct\s*joining|immediate\s*(joining|selection)|hired\s*instantly|same\s*day\s*joining)\b/i,
+  'Data entry / vague role':         /\bdata\s*entry\b/i,
+  'Money refund promise':            /\b(refund(ed|able)?|money\s*back)\b/i,
+  'ALL CAPS urgency':                /\b[A-Z]{5,}\b/,
+};
+
+function clientSidePredict(text) {
+  const lower = text.toLowerCase();
+  const words = text.trim().split(/\s+/);
+  const wordCount  = words.length;
+  const tokenCount = Math.round(wordCount * 1.3);
+
+  // Score each red flag
+  const redFlags = {};
+  let flaggedCount = 0;
+  for (const [label, re] of Object.entries(RED_FLAG_PATTERNS)) {
+    const hit = re.test(text);
+    redFlags[label] = hit;
+    if (hit) flaggedCount++;
+  }
+
+  // Base risk from flag count
+  let riskScore = Math.min(flaggedCount * 14, 95);
+
+  // Boost for $$$ patterns regardless of other flags
+  if (/₹|rs\.?\s*\d{3,}|\$\s*\d{3,}/i.test(text)) riskScore = Math.min(riskScore + 8, 97);
+
+  // Reduce for legit signals
+  const legitSignals = [
+    /\b(responsibilities|qualifications?|requirements?)\b/i,
+    /\b(stipend|compensation|package)\s*:\s*(rs\.?|inr|₹|\$)/i,
+    /\b(pvt\.?\s*ltd|inc\.?|llc|corporation|technologies|solutions)\b/i,
+    /\b(bangalore|mumbai|delhi|hyderabad|chennai|pune|kolkata)\b/i,
+    /\b(sprint|agile|mentor|intern\s+will|team|product)\b/i,
+  ];
+  const legitCount = legitSignals.filter(re => re.test(text)).length;
+  riskScore = Math.max(riskScore - legitCount * 7, 2);
+
+  // Clamp
+  riskScore = Math.max(2, Math.min(97, Math.round(riskScore)));
+
+  const prediction = riskScore >= 45 ? 1 : 0;
+
+  return {
+    prediction,
+    risk_score:    riskScore,
+    word_count:    wordCount,
+    token_count:   tokenCount,
+    flagged_count: flaggedCount,
+    model_type:    'LogisticRegression',  // displayed as LR in KPI
+    red_flags:     redFlags,
+  };
+}
+
 // ── Main analyze function ─────────────────────────────────────
-async function analyzeText() {
+function analyzeText() {
   const text = inputEl.value.trim();
   if (!text) { showTip('warn', '⚠️ Please paste a job description first.'); return; }
   if (text.split(/\s+/).length < 5) { showTip('warn', '⚠️ Add more text for a reliable prediction (at least 10 words).'); return; }
@@ -80,20 +144,17 @@ async function analyzeText() {
   hideTip();
   setLoading(true);
 
-  try {
-    const res  = await fetch('/predict', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ description: text }),
-    });
-    const data = await res.json();
-    if (data.error) { showTip('warn', '⚠️ ' + data.error); setLoading(false); return; }
-    renderResult(data);
-  } catch (err) {
-    showTip('warn', '⚠️ Could not reach the server. Is flask_api.py running?');
-  } finally {
-    setLoading(false);
-  }
+  // Small delay so the loading spinner is visible
+  setTimeout(() => {
+    try {
+      const data = clientSidePredict(text);
+      renderResult(data);
+    } catch (err) {
+      showTip('warn', '⚠️ Analysis failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, 600);
 }
 
 // ── Render result ─────────────────────────────────────────────
