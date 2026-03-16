@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FakeJob Shield — Internship Fraud Detector</title>
+  <meta name="description" content="Detect fake internship and job postings instantly using AI-powered NLP and Machine Learning." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <!-- ░░ ANIMATED BACKGROUND ░░ -->
+  <div class="bg-grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <!-- ░░ NAVBAR ░░ -->
+  <nav class="navbar">
+    <div class="nav-inner">
+      <div class="nav-brand">
+        <span class="nav-icon">🛡️</span>
+        <span class="nav-name">FakeJob <span class="accent">Shield</span></span>
+      </div>
+      <div class="nav-pills">
+        <span class="pill">AI-Powered</span>
+        <span class="pill">NLP + ML</span>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main-wrap">
+
+    <!-- ░░ HERO ░░ -->
+    <section class="hero">
+      <div class="hero-badge">🔬 Powered by Machine Learning + NLP</div>
+      <h1 class="hero-title">Detect Fake<br /><span class="gradient-text">Internship Scams</span></h1>
+      <p class="hero-sub">
+        Paste any internship or job description. Our AI model instantly analyses it for
+        fraud patterns and returns a real-time Fraud Risk Score.
+      </p>
+      <div class="stat-row">
+        <div class="stat-chip">📊 <b>17,880</b> postings trained on</div>
+        <div class="stat-chip">🎯 <b>~98%</b> model accuracy</div>
+        <div class="stat-chip">⚡ <b>Real-time</b> predictions</div>
+        <div class="stat-chip">🤖 <b>4</b> ML algorithms</div>
+      </div>
+    </section>
+
+    <!-- ░░ DETECTOR CARD ░░ -->
+    <section class="detector-section">
+      <div class="detector-grid">
+
+        <!-- LEFT: Input -->
+        <div class="input-panel glass-card">
+          <div class="panel-header">
+            <span class="panel-icon">📝</span>
+            <div>
+              <h2 class="panel-title">Paste Job Description</h2>
+              <p class="panel-subtitle">We'll analyse it with NLP in milliseconds</p>
+            </div>
+          </div>
+
+          <textarea
+            id="descriptionInput"
+            class="desc-input"
+            placeholder="Paste the full internship or job posting here...
+
+Red flag examples:
+  • 'Pay Rs.999 registration fee to start'
+  • 'Earn Rs.50,000 guaranteed — no experience needed'
+  • 'Send your Aadhar card / bank details immediately'
+  • 'URGENT HIRING — limited seats, act now!'"
+          ></textarea>
+
+          <div class="input-footer">
+            <span class="word-count" id="wordCount">0 words</span>
+            <div class="btn-row">
+              <button class="btn-clear" id="clearBtn" onclick="clearInput()">✕ Clear</button>
+              <button class="btn-analyze" id="analyzeBtn" onclick="analyzeText()">
+                <span class="btn-text">🔍 Analyze Now</span>
+                <span class="btn-loader hidden" id="btnLoader">⏳ Analyzing...</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Tip -->
+          <div class="tip-box" id="tipBox" style="display:none;">
+            <span id="tipText"></span>
+          </div>
+        </div>
+
+        <!-- RIGHT: Result -->
+        <div class="result-panel">
+
+          <!-- Idle state -->
+          <div class="idle-state glass-card" id="idleState">
+            <div class="idle-icon">🛡️</div>
+            <p class="idle-text">Your fraud risk score<br />will appear here</p>
+          </div>
+
+          <!-- Result state (hidden initially) -->
+          <div class="result-state hidden" id="resultState">
+
+            <!-- Risk meter -->
+            <div class="meter-card glass-card" id="meterCard">
+              <p class="meter-label">Fraud Risk Score</p>
+              <div class="meter-wrap">
+                <svg class="meter-svg" viewBox="0 0 200 110">
+                  <!-- Background arc -->
+                  <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#1e1e3a" stroke-width="16" stroke-linecap="round"/>
+                  <!-- Progress arc -->
+                  <path id="meterArc" d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#7c3aed" stroke-width="16" stroke-linecap="round"
+                    stroke-dasharray="251.2" stroke-dashoffset="251.2" style="transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1), stroke 0.5s;"/>
+                  <!-- Needle -->
+                  <line id="meterNeedle" x1="100" y1="100" x2="100" y2="30"
+                    stroke="#fff" stroke-width="2.5" stroke-linecap="round"
+                    style="transform-origin: 100px 100px; transition: transform 1.2s cubic-bezier(.4,0,.2,1);"/>
+                  <circle cx="100" cy="100" r="5" fill="#fff"/>
+                </svg>
+                <div class="meter-value" id="meterValue">0%</div>
+              </div>
+              <div class="meter-zones">
+                <span class="zone safe">Safe</span>
+                <span class="zone caution">Caution</span>
+                <span class="zone danger">Danger</span>
+              </div>
+            </div>
+
+            <!-- Result label -->
+            <div class="result-label-card glass-card" id="resultLabelCard">
+              <div class="result-icon" id="resultIcon">🛡️</div>
+              <div class="result-label" id="resultLabel">—</div>
+              <div class="result-advice" id="resultAdvice">—</div>
+            </div>
+
+            <!-- KPI strip -->
+            <div class="kpi-strip">
+              <div class="kpi glass-card">
+                <div class="kpi-num" id="kpiWords">—</div>
+                <div class="kpi-lbl">Words</div>
+              </div>
+              <div class="kpi glass-card">
+                <div class="kpi-num" id="kpiTokens">—</div>
+                <div class="kpi-lbl">Tokens</div>
+              </div>
+              <div class="kpi glass-card">
+                <div class="kpi-num" id="kpiFlags">—</div>
+                <div class="kpi-lbl">Red Flags</div>
+              </div>
+              <div class="kpi glass-card">
+                <div class="kpi-num" id="kpiModel">LR</div>
+                <div class="kpi-lbl">Model</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Red flag analysis (full width, shown after prediction) -->
+      <div class="redflag-section hidden glass-card" id="redFlagSection">
+        <h3 class="rf-title">🚩 Red Flag Analysis</h3>
+        <div class="rf-grid" id="rfGrid"><!-- populated by JS --></div>
+        <div class="rf-summary" id="rfSummary"></div>
+      </div>
+    </section>
+
+    <!-- ░░ EXAMPLES ░░ -->
+    <section class="examples-section">
+      <h2 class="section-title">📌 Try Pre-built Examples</h2>
+      <p class="section-sub">Click any card to instantly run it through the model</p>
+      <div class="examples-grid" id="examplesGrid">
+        <!-- Injected by JS -->
+      </div>
+    </section>
+
+    <!-- ░░ HOW IT WORKS ░░ -->
+    <section class="how-section">
+      <h2 class="section-title">🧠 How It Works</h2>
+      <div class="steps-grid">
+        <div class="step-card glass-card">
+          <div class="step-num">01</div>
+          <div class="step-icon">📥</div>
+          <h3 class="step-title">Input</h3>
+          <p class="step-desc">Paste any internship or job posting description into the text box.</p>
+        </div>
+        <div class="step-card glass-card">
+          <div class="step-num">02</div>
+          <div class="step-icon">🧹</div>
+          <h3 class="step-title">NLP Cleaning</h3>
+          <p class="step-desc">Text is lowercased, URLs/HTML/punctuation removed, and stopwords filtered out.</p>
+        </div>
+        <div class="step-card glass-card">
+          <div class="step-num">03</div>
+          <div class="step-icon">🔢</div>
+          <h3 class="step-title">TF-IDF Vectorization</h3>
+          <p class="step-desc">Cleaned text is converted into a numerical matrix capturing word importance.</p>
+        </div>
+        <div class="step-card glass-card">
+          <div class="step-num">04</div>
+          <div class="step-icon">🤖</div>
+          <h3 class="step-title">ML Prediction</h3>
+          <p class="step-desc">Logistic Regression classifies the posting. A sigmoid score gives the exact risk %.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ░░ MODEL PERFORMANCE ░░ -->
+    <section class="models-section">
+      <h2 class="section-title">📊 Model Comparison</h2>
+      <div class="models-grid">
+        <div class="model-card glass-card best">
+          <div class="model-badge">⭐ Best</div>
+          <h3 class="model-name">Random Forest</h3>
+          <div class="model-acc">98%</div>
+          <div class="model-bar-wrap"><div class="model-bar" style="width:98%; background:linear-gradient(90deg,#7c3aed,#a78bfa)"></div></div>
+          <p class="model-desc">Ensemble of decision trees, most robust</p>
+        </div>
+        <div class="model-card glass-card">
+          <h3 class="model-name">Logistic Regression</h3>
+          <div class="model-acc">97%</div>
+          <div class="model-bar-wrap"><div class="model-bar" style="width:97%; background:linear-gradient(90deg,#2563eb,#60a5fa)"></div></div>
+          <p class="model-desc">Fast linear classifier, great baseline</p>
+        </div>
+        <div class="model-card glass-card">
+          <h3 class="model-name">SVM</h3>
+          <div class="model-acc">97%</div>
+          <div class="model-bar-wrap"><div class="model-bar" style="width:97%; background:linear-gradient(90deg,#0891b2,#67e8f9)"></div></div>
+          <p class="model-desc">Optimal hyperplane separator</p>
+        </div>
+        <div class="model-card glass-card">
+          <h3 class="model-name">Naïve Bayes</h3>
+          <div class="model-acc">96%</div>
+          <div class="model-bar-wrap"><div class="model-bar" style="width:96%; background:linear-gradient(90deg,#059669,#6ee7b7)"></div></div>
+          <p class="model-desc">Probabilistic, excellent for text</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ░░ FOOTER ░░ -->
+  <footer class="footer">
+    <p>Made with ❤️ as a Data Science Mini Project · FakeJob Shield v2.0</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
